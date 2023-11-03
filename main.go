@@ -143,6 +143,7 @@ func enrollT(transaksi data.Transaksi) {
 	insertTransaksi(transaksi, tx)
 	total_harga := selectData(transaksi.Id, tx)
 	insertTransaksidtl(data.Transaksi_dtl{Id_trks: id_trks, Ttl_harga: total_harga}, tx)
+	updateTtlByr(tx, transaksi.Cs_id)
 	err = tx.Commit()
 	if err != nil {
 		panic(err)
@@ -241,4 +242,12 @@ func insertTransaksidtl(transaksi_dtl data.Transaksi_dtl, tx *sql.Tx) {
 	insertTd := "INSERT INTO transaksi_dtl(tr_id,total_harga) VALUES ($1,$2);"
 	_, err := tx.Exec(insertTd, id_trks, total_harga)
 	validate(err, "Insert transaksi detail", tx)
+}
+
+func updateTtlByr(tx *sql.Tx, csID string) {
+    updateQuery := "UPDATE customer SET ttl_byr = (SELECT SUM(total_harga) FROM transaksi_dtl WHERE tr_id IN (SELECT id FROM transaksi WHERE cs_id = $1)) WHERE id = $1;"
+    _, err := tx.Exec(updateQuery, csID)
+    if err != nil {
+        validate(err, "Update ttl_byr", tx)
+    }
 }
