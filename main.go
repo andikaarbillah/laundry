@@ -108,10 +108,17 @@ func menu() {
 		var pel int
 		fmt.Scanln(&pel)
 		for i := 0; i < pel; i++ {
-			fmt.Printf("\nPelayan ke-%d", i+1)
+			fmt.Print("\n")
+			fmt.Println(strings.Repeat("-", 14))
+			fmt.Printf("|Pelayan ke-%d|\n", i+1)
+			fmt.Println(strings.Repeat("-", 14))
+			fmt.Print("\n")
+
 			inputanTransaksi()
 		}
-
+	case 2:
+	case 3:
+		nota()
 	default:
 
 	}
@@ -260,4 +267,45 @@ func updateTtlByr(tx *sql.Tx, csID string) {
 	if err != nil {
 		validate(err, "Update ttl_byr", tx)
 	}
+}
+
+// view nota
+func nota() {
+	fmt.Print("Masukkan No ID pelanggan : ")
+	fmt.Scan(&cs_id)
+	viewNotadata(cs_id)
+}
+func viewNotadata(id_cs string) {
+	db := connectDB()
+	defer db.Close()
+
+	query := "SELECT customer.id, customer.date_in, customer.date_out, user_.ur_nm, customer.nm_cs, customer.no_tp, customer.tambahan, customer.ttl_byr FROM customer JOIN transaksi ON customer.id = transaksi.cs_id JOIN user_ ON transaksi.ur_id = user_.id WHERE customer.id = $1 LIMIT 1;"
+
+	rows, err := db.Query(query, id_cs)
+	if err != nil {
+		fmt.Println("Id pelanggan tidak ditemukan !!")
+	}
+	defer rows.Close()
+
+	fmt.Print("\nNota : \n")
+	fmt.Println(strings.Repeat("=", 75))
+	fmt.Print("\t\t\t     ENIGMA LAUNDRY\n")
+	fmt.Println(strings.Repeat("=", 75))
+
+	for rows.Next() {
+		rows.Scan(&cs_id, &date_in, &date_out, &ur_nm, &cs_nm, &no_tlp, &tambahan, &ttl_byr)
+	}
+	var paket string
+	if tambahan == 10000 {
+		paket = "Paket Kilat"
+	} else if tambahan == 5000 {
+		paket = "Paket Badai"
+	} else if tambahan == 0 {
+		paket = "Paket Gerimis"
+	}
+	fmt.Printf("%-15s %-25s %s %s\n", "No Transaksi   : ", cs_id, "Nama customer : ", cs_nm)
+	fmt.Printf("%-15s %-25s %s %s\n", "Tanggal Masuk  : ", date_in.Format("2006-01-02"), "No telepon    : ", no_tlp)
+	fmt.Printf("%-15s %-25s %s %s\n", "Tanggal Selesai: ", date_out.Format("2006-01-02"), "Paket Laundry : ", paket)
+	fmt.Printf("%-15s %-25s %s %d\n", "Di Terima oleh : ", ur_nm, "Fee paket     : ", tambahan)
+	fmt.Println(strings.Repeat("=", 75))
 }
