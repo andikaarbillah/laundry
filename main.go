@@ -24,10 +24,9 @@ const (
 var psqlInfo = fmt.Sprintf("host = %s port = %d user = %s password = %s dbname = %s sslmode = disable", host, port, user, password, dbname)
 
 var ur_id, cs_id, lyn_id, pswd, ur_nm, cs_nm, no_tlp, jenis_layanan, satuan string
-var id_rl, nm_rl string
 var date_in, date_out time.Time
 var quantity, no_nota int
-var ttl_byr, tambahan, total_harga, id_trks, harga int64
+var ttl_byr, tambahan, total_harga, id_trks, harga, id_trks_dtl int64
 
 func main() {
 	login()
@@ -119,11 +118,21 @@ func menu() {
 		viewNotaHead(cs_id)
 		viewNotaBody(cs_id)
 	case 2:
-		nota()
-		viewRole()
-		viewUser()
-		viewCustomer()
-		viewTransaksi()
+		fmt.Print("\nMenampilkan data :\n1. Nota\n2. customer\n3. transaksi\n4. layanan\n5. exit\n==============: ")
+		var view int
+		fmt.Scanln(&view)
+		switch view {
+		case 1:
+			nota()
+		case 2:
+			viewCustomer()
+		case 3:
+			viewTransaksi()
+			viewTransaksidtl()
+		case 4:
+			viewLayanan()
+		default:
+		}
 	case 3:
 
 	default:
@@ -298,9 +307,9 @@ func viewNotaHead(id_cs string) {
 	defer rows.Close()
 
 	fmt.Print("\nNota : \n")
-	fmt.Println(strings.Repeat("=", 75))
-	fmt.Print("\t\t\t     ENIGMA LAUNDRY\n")
-	fmt.Println(strings.Repeat("=", 75))
+	fmt.Println(strings.Repeat("-", 75))
+	fmt.Print("\t\t\t     ENIGMA AUNDRY\n")
+	fmt.Println(strings.Repeat("-", 75))
 
 	for rows.Next() {
 		rows.Scan(&cs_id, &date_in, &date_out, &ur_nm, &cs_nm, &no_tlp, &tambahan, &ttl_byr)
@@ -341,52 +350,9 @@ func viewNotaBody(id_cs string) {
 		fmt.Printf("%-3d %-26s %-8d %-9s %-10d %-9d\n", no_nota, jenis_layanan, quantity, satuan, harga, total_harga)
 	}
 	fmt.Print("\n\n\n")
-	fmt.Print(strings.Repeat("=", 75))
+	fmt.Print(strings.Repeat("-", 75))
 	fmt.Printf("\n%+63s %-8d %s\n", "||  Toatal Pembayaran : ", ttl_byr, "||")
-	fmt.Println(strings.Repeat("=", 75))
-
-}
-
-// view role
-func viewRole() {
-	db := connectDB()
-	defer db.Close()
-
-	query3 := "SELECT * FROM role;"
-	rows, err := db.Query(query3)
-	if err != nil {
-		panic(err)
-	}
-	defer rows.Close()
-	fmt.Println(strings.Repeat("-", 12))
-	fmt.Printf("%-5s %s", "ID", "ROLE\n")
-	fmt.Println(strings.Repeat("-", 12))
-
-	for rows.Next() {
-		rows.Scan(&id_rl, &nm_rl)
-		fmt.Printf("%-5s %s\n", id_rl, nm_rl)
-	}
-}
-
-func viewUser() {
-	db := connectDB()
-	defer db.Close()
-
-	query4 := "SELECT user_.id,role.id,user_.ur_nm,user_.pswd from user_ join role on user_.id_rl=role.id;"
-	rows, err := db.Query(query4)
-	if err != nil {
-		fmt.Println("LIST MASIH BELUM TERISI")
-	}
-	defer rows.Close()
-	fmt.Print("\nTable User:\n")
-	fmt.Println(strings.Repeat("-", 35))
-	fmt.Printf("%-4s %-4s  %-9s %s", "ID", "|ID-ROLE", "|USER NAME", "|PASSWORD\n")
-	fmt.Println(strings.Repeat("-", 35))
-
-	for rows.Next() {
-		rows.Scan(&ur_id, &id_rl, &ur_nm, &pswd)
-		fmt.Printf("%-5s %-8s  %-10s %s\n", ur_id, id_rl, ur_nm, pswd)
-	}
+	fmt.Println(strings.Repeat("-", 75))
 
 }
 
@@ -430,6 +396,51 @@ func viewTransaksi() {
 	for rows.Next() {
 		rows.Scan(&id_trks, &ur_id, &cs_id, &lyn_id, &quantity)
 		fmt.Printf("%-4d %-8s %-8s %-11s %-9d\n", id_trks, ur_id, cs_id, lyn_id, quantity)
+	}
+
+}
+
+func viewTransaksidtl() {
+	db := connectDB()
+	defer db.Close()
+
+	query7 := "SELECT * FROM transaksi_dtl;"
+	rows, err := db.Query(query7)
+	if err != nil {
+		fmt.Println("LIST MASIH BELUM TERISI!!")
+	}
+	defer rows.Close()
+	fmt.Print("\nTable transaksi detail:\n")
+	fmt.Println(strings.Repeat("-", 30))
+	fmt.Printf("%-3s %-12s %-10s\n", "ID", "|Transaksi ID", "|Total harga")
+	fmt.Println(strings.Repeat("-", 30))
+
+	for rows.Next() {
+		rows.Scan(&id_trks_dtl, &id_trks, &total_harga)
+		fmt.Printf("%-4d %-13d %-10d\n", id_trks_dtl, id_trks, total_harga)
+	}
+
+}
+
+// view
+func viewLayanan() {
+	db := connectDB()
+	defer db.Close()
+
+	query8 := "SELECT * FROM layanan;"
+	rows, err := db.Query(query8)
+	if err != nil {
+		fmt.Println("LIST MASIH BELUM TERISI!!")
+	}
+	defer rows.Close()
+	fmt.Print("\nTable Layanan:\n")
+	fmt.Println(strings.Repeat("-", 40))
+	fmt.Printf("%-4s %-18s %-7s %s\n", "ID", "|Jenis Layanan", "|Satuan", "|Harga")
+	fmt.Println(strings.Repeat("-", 40))
+
+	for rows.Next() {
+		rows.Scan(&lyn_id, &jenis_layanan, &satuan, &harga)
+		fmt.Printf("%-5s %-18s %-7s %d\n", lyn_id, jenis_layanan, satuan, harga)
 	}
 
 }
