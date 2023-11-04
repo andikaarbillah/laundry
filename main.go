@@ -194,7 +194,7 @@ func inputanCustomer() {
 	fmt.Scanln(&no_tlp)
 	ttl_byr = 0
 	var pil int
-	fmt.Print("\nMenu Paket:\n\n1. Paket Kilat    | 1 hari |+ 10 K fee|\n2. Paket Badai    | 2 hari |+ 05 K fee|\n3. Paket Gerimis  | 3 hari |+ 00 K fee|\n\n=============: ")
+	fmt.Print("\nMenu Paket:\n\n1. Paket Kilat    | 1 hari |+ 10 K fee|\n2. Paket Badai    | 2 hari |+ 05 K fee|\n3. Paket Gerimis  | 3 hari |+ 00 K fee|\n\n=======================================: ")
 	fmt.Scanln(&pil)
 	switch pil {
 	case 1:
@@ -225,7 +225,7 @@ func inputanTransaksi() {
 	id_trks = id_trks + 1
 
 	var pill int
-	fmt.Print("\nMenu Pelayanan:\n1. Cuci + gosok     | 07k /KG |\n2. Laundry Bedcover |50k/Buah | \n3. Laundry Boneka   |25k/Buah |\n4. laundry ambal    |20k/meter|\n=============: ")
+	fmt.Print("\nMenu Pelayanan:\n1. Cuci + gosok     | 07k /KG |\n2. Laundry Bedcover |50k/Buah | \n3. Laundry Boneka   |25k/Buah |\n4. laundry ambal    |20k/meter|\n===================================: ")
 	fmt.Scanln(&pill)
 	switch pill {
 	case 1:
@@ -329,11 +329,11 @@ func viewNotaBody(id_cs string) {
 	fmt.Println(strings.Repeat("=", 75))
 	for rows.Next() {
 		rows.Scan(&no_nota, &jenis_layanan, &quantity, &satuan, &harga, &total_harga)
-		fmt.Printf("%-3d %-20s %-8d %-9s %-8d %-10d %-11d\n", no_nota, jenis_layanan, quantity, satuan, harga, tambahan, total_harga)
+		fmt.Printf("%-3d %-20s %-8d %-9s %-7d %-9d %-11d\n", no_nota, jenis_layanan, quantity, satuan, harga, tambahan, total_harga)
 	}
 	fmt.Print("\n\n\n")
 	fmt.Print(strings.Repeat("=", 75))
-	fmt.Printf("\n%+63s %d %+4s\n", "||  Toatal Pembayaran : ", ttl_byr, "||")
+	fmt.Printf("\n%+63s %-8d %s\n", "||  Toatal Pembayaran : ", ttl_byr, "||")
 	fmt.Println(strings.Repeat("=", 75))
 
 }
