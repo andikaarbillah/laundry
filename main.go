@@ -24,6 +24,7 @@ const (
 var psqlInfo = fmt.Sprintf("host = %s port = %d user = %s password = %s dbname = %s sslmode = disable", host, port, user, password, dbname)
 
 var ur_id, cs_id, lyn_id, pswd, ur_nm, cs_nm, no_tlp, jenis_layanan, satuan string
+var id_rl, nm_rl string
 var date_in, date_out time.Time
 var quantity, no_nota int
 var ttl_byr, tambahan, total_harga, id_trks, harga int64
@@ -98,7 +99,7 @@ func menu() {
 	fmt.Println(strings.Repeat("-", 56))
 	fmt.Println("\t |SILAHKAN PILIH OPSI YANG DIINGINKAN|")
 	fmt.Println(strings.Repeat("-", 56))
-	fmt.Print("\n1. pelayanan\n2. Lihat data\n3. Nota \n4. Update\n5. Delete\n6. Exit\n\n============: ")
+	fmt.Print("\n1. pelayanan\n2. Lihat data\n3. Update\n4. Delete\n5. Exit\n\n============: ")
 	var menu int
 	fmt.Scanln(&menu)
 	switch menu {
@@ -113,12 +114,18 @@ func menu() {
 			fmt.Printf("|Pelayan ke-%d|\n", i+1)
 			fmt.Println(strings.Repeat("-", 14))
 			fmt.Print("\n")
-
 			inputanTransaksi()
 		}
+		viewNotaHead(cs_id)
+		viewNotaBody(cs_id)
 	case 2:
-	case 3:
 		nota()
+		viewRole()
+		viewUser()
+		viewCustomer()
+		viewTransaksi()
+	case 3:
+
 	default:
 
 	}
@@ -158,6 +165,7 @@ func enrollT(transaksi data.Transaksi) {
 	total_harga := selectData(transaksi.Id, tx)
 	insertTransaksidtl(data.Transaksi_dtl{Id_trks: id_trks, Ttl_harga: total_harga}, tx)
 	updateTtlByr(tx, transaksi.Cs_id)
+
 	err = tx.Commit()
 	if err != nil {
 		panic(err)
@@ -167,6 +175,7 @@ func enrollT(transaksi data.Transaksi) {
 		fmt.Print("\n|Transaction Commited!|\n")
 		fmt.Println(strings.Repeat("-", 23))
 	}
+
 }
 
 // insert Data
@@ -309,7 +318,7 @@ func viewNotaHead(id_cs string) {
 	fmt.Printf("%-15s %-25s %s %s\n", "Tanggal Masuk  : ", date_in.Format("2006-01-02"), "No telepon    : ", no_tlp)
 	fmt.Printf("%-15s %-25s %s %s\n", "Tanggal Selesai: ", date_out.Format("2006-01-02"), "Paket Laundry : ", paket)
 	fmt.Printf("%-15s %-25s %s %d\n", "Di Terima oleh : ", ur_nm, "Fee paket     : ", tambahan)
-	fmt.Println(strings.Repeat("=", 75))
+	fmt.Println(strings.Repeat("-", 75))
 }
 
 func viewNotaBody(id_cs string) {
@@ -325,15 +334,102 @@ func viewNotaBody(id_cs string) {
 	}
 	defer rows.Close()
 	//body
-	fmt.Printf("%-2s %-19s %-8s %-9s %-7s %-9s %-11s", "No|", "Pelayanan", "|Jumlah", "|Satuan", "|Harga", "|Tambahan", "|Total harga\n")
-	fmt.Println(strings.Repeat("=", 75))
+	fmt.Printf("%-2s %-25s %-8s %-9s %-10s %-11s", "No|", "Pelayanan", "|Jumlah", "|Satuan", "|Harga", "|Total harga\n")
+	fmt.Println(strings.Repeat("-", 75))
 	for rows.Next() {
 		rows.Scan(&no_nota, &jenis_layanan, &quantity, &satuan, &harga, &total_harga)
-		fmt.Printf("%-3d %-20s %-8d %-9s %-7d %-9d %-11d\n", no_nota, jenis_layanan, quantity, satuan, harga, tambahan, total_harga)
+		fmt.Printf("%-3d %-26s %-8d %-9s %-10d %-9d\n", no_nota, jenis_layanan, quantity, satuan, harga, total_harga)
 	}
 	fmt.Print("\n\n\n")
 	fmt.Print(strings.Repeat("=", 75))
 	fmt.Printf("\n%+63s %-8d %s\n", "||  Toatal Pembayaran : ", ttl_byr, "||")
 	fmt.Println(strings.Repeat("=", 75))
+
+}
+
+// view role
+func viewRole() {
+	db := connectDB()
+	defer db.Close()
+
+	query3 := "SELECT * FROM role;"
+	rows, err := db.Query(query3)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	fmt.Println(strings.Repeat("-", 12))
+	fmt.Printf("%-5s %s", "ID", "ROLE\n")
+	fmt.Println(strings.Repeat("-", 12))
+
+	for rows.Next() {
+		rows.Scan(&id_rl, &nm_rl)
+		fmt.Printf("%-5s %s\n", id_rl, nm_rl)
+	}
+}
+
+func viewUser() {
+	db := connectDB()
+	defer db.Close()
+
+	query4 := "SELECT user_.id,role.id,user_.ur_nm,user_.pswd from user_ join role on user_.id_rl=role.id;"
+	rows, err := db.Query(query4)
+	if err != nil {
+		fmt.Println("LIST MASIH BELUM TERISI")
+	}
+	defer rows.Close()
+	fmt.Print("\nTable User:\n")
+	fmt.Println(strings.Repeat("-", 35))
+	fmt.Printf("%-4s %-4s  %-9s %s", "ID", "|ID-ROLE", "|USER NAME", "|PASSWORD\n")
+	fmt.Println(strings.Repeat("-", 35))
+
+	for rows.Next() {
+		rows.Scan(&ur_id, &id_rl, &ur_nm, &pswd)
+		fmt.Printf("%-5s %-8s  %-10s %s\n", ur_id, id_rl, ur_nm, pswd)
+	}
+
+}
+
+func viewCustomer() {
+	db := connectDB()
+	defer db.Close()
+
+	query5 := "SELECT * FROM customer;"
+	rows, err := db.Query(query5)
+	if err != nil {
+		fmt.Println("LIST MASIH BELUM TERISI")
+	}
+	defer rows.Next()
+	fmt.Print("\nTable Customer:\n")
+	fmt.Println(strings.Repeat("-", 90))
+	fmt.Printf("%-5s %-14s %-14s %-11s %-11s %-8s %s\n", "ID", "|Nama", "|No telepon", "|Tanggal Masuk", "|Tanggal Selesai", "|Tambahan", "|Total Bayar")
+	fmt.Println(strings.Repeat("-", 90))
+
+	for rows.Next() {
+		rows.Scan(&cs_id, &cs_nm, &no_tlp, &date_in, &date_out, &tambahan, &ttl_byr)
+		fmt.Printf("%-6s %-14s %-14s %-14s %-16s %-9d %d\n", cs_id, cs_nm, no_tlp, date_in.Format("2006-01-02"), date_out.Format("2006-01-02"), tambahan, ttl_byr)
+	}
+
+}
+
+func viewTransaksi() {
+	db := connectDB()
+	defer db.Close()
+
+	query6 := "SELECT * FROM transaksi;"
+	rows, err := db.Query(query6)
+	if err != nil {
+		fmt.Println("LIST MASIH BELUM TERISI")
+	}
+	defer rows.Next()
+	fmt.Print("\nTable Transaksi:\n")
+	fmt.Println(strings.Repeat("-", 43))
+	fmt.Printf("%-3s %-8s %-8s %-8s %-9s\n", "ID", "|User ID", "|CS ID", "|Layanan ID", "|Quantity")
+	fmt.Println(strings.Repeat("-", 43))
+
+	for rows.Next() {
+		rows.Scan(&id_trks, &ur_id, &cs_id, &lyn_id, &quantity)
+		fmt.Printf("%-4d %-8s %-8s %-11s %-9d\n", id_trks, ur_id, cs_id, lyn_id, quantity)
+	}
 
 }
