@@ -23,10 +23,10 @@ const (
 
 var psqlInfo = fmt.Sprintf("host = %s port = %d user = %s password = %s dbname = %s sslmode = disable", host, port, user, password, dbname)
 
-var ur_id, cs_id, lyn_id, pswd, ur_nm, cs_nm, no_tlp string
+var ur_id, cs_id, lyn_id, pswd, ur_nm, cs_nm, no_tlp, jenis_layanan, satuan string
 var date_in, date_out time.Time
-var quantity int
-var ttl_byr, tambahan, total_harga, id_trks int64
+var quantity, no_nota int
+var ttl_byr, tambahan, total_harga, id_trks, harga int64
 
 func main() {
 	login()
@@ -273,9 +273,10 @@ func updateTtlByr(tx *sql.Tx, csID string) {
 func nota() {
 	fmt.Print("Masukkan No ID pelanggan : ")
 	fmt.Scan(&cs_id)
-	viewNotadata(cs_id)
+	viewNotaHead(cs_id)
+	viewNotaBody(cs_id)
 }
-func viewNotadata(id_cs string) {
+func viewNotaHead(id_cs string) {
 	db := connectDB()
 	defer db.Close()
 
@@ -303,9 +304,36 @@ func viewNotadata(id_cs string) {
 	} else if tambahan == 0 {
 		paket = "Paket Gerimis"
 	}
+	//kepala
 	fmt.Printf("%-15s %-25s %s %s\n", "No Transaksi   : ", cs_id, "Nama customer : ", cs_nm)
 	fmt.Printf("%-15s %-25s %s %s\n", "Tanggal Masuk  : ", date_in.Format("2006-01-02"), "No telepon    : ", no_tlp)
 	fmt.Printf("%-15s %-25s %s %s\n", "Tanggal Selesai: ", date_out.Format("2006-01-02"), "Paket Laundry : ", paket)
 	fmt.Printf("%-15s %-25s %s %d\n", "Di Terima oleh : ", ur_nm, "Fee paket     : ", tambahan)
 	fmt.Println(strings.Repeat("=", 75))
+}
+
+func viewNotaBody(id_cs string) {
+	db := connectDB()
+	defer db.Close()
+
+	query2 := "SELECT ROW_NUMBER() OVER (ORDER BY layanan.jns_lyn), layanan.jns_lyn, transaksi.quantity, layanan.satuan, layanan.harga, transaksi_dtl.total_harga FROM customer JOIN transaksi ON customer.id = transaksi.cs_id JOIN layanan ON layanan.id = transaksi.lyn_id JOIN transaksi_dtl ON transaksi.id = transaksi_dtl.tr_id where customer.id = $1;"
+
+	rows, err := db.Query(query2, id_cs)
+	if err != nil {
+		fmt.Println("Error querying data :", err)
+		return
+	}
+	defer rows.Close()
+	//body
+	fmt.Printf("%-2s %-19s %-8s %-9s %-7s %-9s %-11s", "No|", "Pelayanan", "|Jumlah", "|Satuan", "|Harga", "|Tambahan", "|Total harga\n")
+	fmt.Println(strings.Repeat("=", 75))
+	for rows.Next() {
+		rows.Scan(&no_nota, &jenis_layanan, &quantity, &satuan, &harga, &total_harga)
+		fmt.Printf("%-3d %-20s %-8d %-9s %-8d %-10d %-11d\n", no_nota, jenis_layanan, quantity, satuan, harga, tambahan, total_harga)
+	}
+	fmt.Print("\n\n\n")
+	fmt.Print(strings.Repeat("=", 75))
+	fmt.Printf("\n%+63s %d %+4s\n", "||  Toatal Pembayaran : ", ttl_byr, "||")
+	fmt.Println(strings.Repeat("=", 75))
+
 }
