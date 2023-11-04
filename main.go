@@ -56,7 +56,7 @@ func validate(err error, message string, tx *sql.Tx) {
 	}
 }
 
-// login
+// login user sekalian input
 func login() {
 a:
 	db := connectDB()
@@ -104,7 +104,14 @@ func menu() {
 	switch menu {
 	case 1:
 		inputanCustomer()
-		inputanTransaksi()
+		fmt.Print("\nMasukkan jumlah pelayanan : ")
+		var pel int
+		fmt.Scanln(&pel)
+		for i := 0; i < pel; i++ {
+			fmt.Printf("\nPelayan ke-%d", i+1)
+			inputanTransaksi()
+		}
+
 	default:
 
 	}
@@ -202,6 +209,7 @@ func inputanCustomer() {
 	enrollC(customerInsert)
 }
 
+// trks pleyanan
 func inputanTransaksi() {
 	db := connectDB()
 	defer db.Close()
@@ -238,16 +246,18 @@ func selectData(id_trks int64, tx *sql.Tx) int64 {
 	return total_harga
 }
 
+// insert ttlharga
 func insertTransaksidtl(transaksi_dtl data.Transaksi_dtl, tx *sql.Tx) {
 	insertTd := "INSERT INTO transaksi_dtl(tr_id,total_harga) VALUES ($1,$2);"
 	_, err := tx.Exec(insertTd, id_trks, total_harga)
 	validate(err, "Insert transaksi detail", tx)
 }
 
+// update ttl byar
 func updateTtlByr(tx *sql.Tx, csID string) {
-    updateQuery := "UPDATE customer SET ttl_byr = (SELECT SUM(total_harga) FROM transaksi_dtl WHERE tr_id IN (SELECT id FROM transaksi WHERE cs_id = $1)) WHERE id = $1;"
-    _, err := tx.Exec(updateQuery, csID)
-    if err != nil {
-        validate(err, "Update ttl_byr", tx)
-    }
+	updateQuery := "UPDATE customer SET ttl_byr = (SELECT SUM(transaksi_dtl.total_harga + customer.tambahan) FROM transaksi_dtl join transaksi on transaksi_dtl.tr_id = transaksi.id join customer on transaksi.cs_id = customer.id WHERE transaksi_dtl.tr_id IN (SELECT id FROM transaksi WHERE cs_id = $1)) WHERE id = $1;"
+	_, err := tx.Exec(updateQuery, csID)
+	if err != nil {
+		validate(err, "Update ttl_byr", tx)
+	}
 }
