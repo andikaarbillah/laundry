@@ -100,11 +100,23 @@ b:
 	switch menu {
 	case 1:
 	a:
+		fmt.Println()
+		fmt.Println(strings.Repeat("-", 16))
+		fmt.Println("|MENU PELAYANAN|")
+		fmt.Println(strings.Repeat("-", 16))
+
 		viewCustomer()
 		inputanCustomer()
+	f:
+		fmt.Print("\n[CAUTION!! MAX PELAYANAN 4]")
 		fmt.Print("\nMasukkan jumlah pelayanan : ")
 		var pel int
 		fmt.Scanln(&pel)
+		if pel > 4 {
+			fmt.Println("Ulangi Masukkan jumlah pelayanan")
+			fmt.Scanln()
+			goto f
+		}
 		for i := 0; i < pel; i++ {
 			fmt.Print("\n")
 			fmt.Println(strings.Repeat("-", 14))
@@ -125,7 +137,12 @@ b:
 		}
 	case 2:
 	c:
-		fmt.Print("\nMenampilkan data :\n1. Nota\n2. customer\n3. transaksi\n4. layanan\n5. exit\n==============: ")
+		fmt.Println()
+		fmt.Println(strings.Repeat("-", 21))
+		fmt.Println("|MENU TAMPILKAN DATA|")
+		fmt.Println(strings.Repeat("-", 16))
+
+		fmt.Print("\nMenampilkan data :\n1. Nota\n2. customer\n3. transaksi\n4. layanan\n5. back to main menu\n6. exit\n==============: ")
 		var view int
 		fmt.Scanln(&view)
 		switch view {
@@ -170,9 +187,16 @@ b:
 			} else {
 				goto b
 			}
+		case 5:
+			goto b
 		default:
 		}
 	case 3:
+		fmt.Println()
+		fmt.Println(strings.Repeat("-", 18))
+		fmt.Println("|MENU UPDATE DATA|")
+		fmt.Println(strings.Repeat("-", 18))
+
 		fmt.Print("\nUpdate Data : \n1. Customer\n2. Layanan\n3. kembali ke menu awal\n4. exit \n================: ")
 		var pil int
 		fmt.Scanln(&pil)
@@ -180,7 +204,6 @@ b:
 		case 1:
 		d:
 			Updatecs()
-			viewLayanan()
 			fmt.Print("\nApakah ingin mengupdate data yang lain [Y/T]: ")
 			var pil string
 			fmt.Scanln(&pil)
@@ -207,6 +230,10 @@ b:
 		}
 
 	case 4:
+		fmt.Println()
+		fmt.Println(strings.Repeat("-", 16))
+		fmt.Println("|MENU DELETE CSUTOMER|")
+		fmt.Println(strings.Repeat("-", 16))
 		deletecs()
 	default:
 
@@ -529,7 +556,7 @@ func viewLayananT() {
 	db := connectDB()
 	defer db.Close()
 
-	query8 := "SELECT ROW_NUMBER() OVER(ORDER BY jns_lyn),jns_lyn,satuan,harga from layanan ORDER BY id ASC;"
+	query8 := "SELECT ROW_NUMBER() OVER(ORDER BY id),jns_lyn,satuan,harga from layanan ORDER BY id ASC;"
 	rows, err := db.Query(query8)
 	if err != nil {
 		fmt.Println("LIST MASIH BELUM TERISI!!")
