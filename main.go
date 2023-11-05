@@ -134,7 +134,7 @@ func menu() {
 		default:
 		}
 	case 3:
-
+		Updatecs()
 	default:
 
 	}
@@ -172,7 +172,7 @@ func enrollT(transaksi data.Transaksi) {
 	}
 	insertTransaksi(transaksi, tx)
 	total_harga := selectData(transaksi.Id, tx)
-	insertTransaksidtl(data.Transaksi_dtl{Id_trks: id_trks, Ttl_harga: total_harga}, tx)
+	insertTransaksidtl(data.Transaksi_dtl{Id_trks: id_trks, Ttl_harga: total_harga + tambahan}, tx)
 	updateTtlByr(tx, transaksi.Cs_id)
 
 	err = tx.Commit()
@@ -280,7 +280,7 @@ func insertTransaksidtl(transaksi_dtl data.Transaksi_dtl, tx *sql.Tx) {
 
 // update ttl byar
 func updateTtlByr(tx *sql.Tx, csID string) {
-	updateQuery := "UPDATE customer SET ttl_byr = (SELECT SUM(transaksi_dtl.total_harga + customer.tambahan) FROM transaksi_dtl join transaksi on transaksi_dtl.tr_id = transaksi.id join customer on transaksi.cs_id = customer.id WHERE transaksi_dtl.tr_id IN (SELECT id FROM transaksi WHERE cs_id = $1)) WHERE id = $1;"
+	updateQuery := "UPDATE customer SET ttl_byr = (SELECT SUM(total_harga) FROM transaksi_dtl JOIN transaksi ON transaksi_dtl.tr_id = transaksi.id WHERE transaksi.cs_id = $1) + tambahan WHERE id = $1;"
 	_, err := tx.Exec(updateQuery, csID)
 	if err != nil {
 		validate(err, "Update ttl_byr", tx)
@@ -442,5 +442,60 @@ func viewLayanan() {
 		rows.Scan(&lyn_id, &jenis_layanan, &satuan, &harga)
 		fmt.Printf("%-5s %-18s %-7s %d\n", lyn_id, jenis_layanan, satuan, harga)
 	}
+
+}
+
+// update customer
+func enrollupdT(customer data.UpdateandDelete) {
+	db := connectDB()
+	defer db.Close()
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(err)
+	}
+	UpdateCustomer(customer, tx)
+	updateTtlByr(tx, customer.Cs_id)
+	err = tx.Commit()
+	if err != nil {
+		panic(err)
+	} else {
+
+		fmt.Print(strings.Repeat("-", 23))
+		fmt.Print("\n|Transaction Commited!|\n")
+		fmt.Println(strings.Repeat("-", 23))
+	}
+}
+func UpdateCustomer(update data.UpdateandDelete, tx *sql.Tx) {
+	sqlStatement := "UPDATE customer SET date_in = $1, date_out = $2, tambahan = $3 WHERE id = $4;"
+	_, err := tx.Exec(sqlStatement, date_in, date_out, tambahan, cs_id)
+	if err != nil {
+		fmt.Println("ID cs tidak ada!")
+	}
+	validate(err, "Update Changes in customer!", tx)
+}
+func Updatecs() {
+	fmt.Print("\nMasukkan Id customer      : ")
+	fmt.Scanln(&cs_id)
+	var pil int
+	fmt.Print("\nMenu Paket:\n\n1. Paket Kilat    | 1 hari |+ 10 K fee|\n2. Paket Badai    | 2 hari |+ 05 K fee|\n3. Paket Gerimis  | 3 hari |+ 00 K fee|\n\n=======================================: ")
+	fmt.Scanln(&pil)
+	switch pil {
+	case 1:
+		date_in = time.Now()
+		date_out = time.Now().Add(1 * 24 * time.Hour)
+		tambahan = 10000
+	case 2:
+		date_in = time.Now()
+		date_out = time.Now().Add(2 * 24 * time.Hour)
+		tambahan = 5000
+	case 3:
+		date_in = time.Now()
+		date_out = time.Now().Add(3 * 24 * time.Hour)
+		tambahan = 0
+	default:
+	}
+	update := data.UpdateandDelete{Cs_id: cs_id, Date_in: date_in, Date_out: date_out, Tambahan: tambahan}
+	enrollupdT(update)
 
 }

@@ -43,3 +43,13 @@ type Transaksi_dtl struct {
 	Id_trks   int64
 	Ttl_harga int64
 }
+
+type UpdateandDelete struct {
+	Cs_id    string
+	Date_in  time.Time
+	Date_out time.Time
+	Tambahan int64
+	Lyn_id   string
+	Quantity int
+	Id_trks  int
+}
