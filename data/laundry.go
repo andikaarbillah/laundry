@@ -52,4 +52,5 @@ type UpdateandDelete struct {
 	Lyn_id   string
 	Quantity int
 	Id_trks  int
+	Harga    int64
 }

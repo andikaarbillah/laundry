@@ -79,7 +79,7 @@ a:
 		fmt.Printf("\nLogin berhasil !, Selamat datang %s\n\n", ur_nm)
 	} else {
 		fmt.Println("\nLogin Gagal!, Id atau sandi salah!!")
-		fmt.Println("\nLanjut Login [Y/T]: ")
+		fmt.Print("\nLanjut Login [Y/T]: ")
 		var lanjut string
 		fmt.Scanln(&lanjut)
 		if lanjut == "Y" || lanjut == "y" {
@@ -100,6 +100,7 @@ b:
 	switch menu {
 	case 1:
 	a:
+		viewCustomer()
 		inputanCustomer()
 		fmt.Print("\nMasukkan jumlah pelayanan : ")
 		var pel int
@@ -172,8 +173,39 @@ b:
 		default:
 		}
 	case 3:
-		fmt.Print("Update Data : \n1. Customer\n2. Layanan\n3. ")
-		Updatecs()
+		fmt.Print("\nUpdate Data : \n1. Customer\n2. Layanan\n3. kembali ke menu awal\n4. exit \n================: ")
+		var pil int
+		fmt.Scanln(&pil)
+		switch pil {
+		case 1:
+		d:
+			Updatecs()
+			viewLayanan()
+			fmt.Print("\nApakah ingin mengupdate data yang lain [Y/T]: ")
+			var pil string
+			fmt.Scanln(&pil)
+			if pil == "y" || pil == "Y" {
+				goto d
+			} else {
+				goto b
+			}
+		case 2:
+		e:
+			updatelyn()
+			fmt.Print("\nApakah ingin mengupdate data yang lain [Y/T]: ")
+			var pil string
+			fmt.Scanln(&pil)
+			if pil == "y" || pil == "Y" {
+				goto e
+			} else {
+				goto b
+			}
+		case 3:
+			goto b
+		default:
+
+		}
+
 	case 4:
 		deletecs()
 	default:
@@ -243,6 +275,7 @@ func insertTransaksi(transaksi data.Transaksi, tx *sql.Tx) {
 
 // inputan user_
 func inputanCustomer() {
+	fmt.Println("[CAUTION!!] Tuliskan ID berikutnya yang belum terdaftar")
 	fmt.Print("\nMasukkan Id customer      : ")
 	fmt.Scanln(&cs_id)
 	fmt.Print("Masukkan Nama customer    : ")
@@ -284,7 +317,9 @@ func inputanTransaksi() {
 	id_trks = id_trks + 1
 
 	var pill int
-	fmt.Print("\nMenu Pelayanan:\n1. Cuci + gosok     | 07k /KG |\n2. Laundry Bedcover |50k/Buah | \n3. Laundry Boneka   |25k/Buah |\n4. laundry ambal    |20k/meter|\n===================================: ")
+	fmt.Print("\nMenu Pelayanan:\n")
+	viewLayananT()
+	fmt.Print("\n============================: ")
 	fmt.Scanln(&pill)
 	switch pill {
 	case 1:
@@ -490,6 +525,28 @@ func viewLayanan() {
 	}
 
 }
+func viewLayananT() {
+	db := connectDB()
+	defer db.Close()
+
+	query8 := "SELECT ROW_NUMBER() OVER(ORDER BY jns_lyn),jns_lyn,satuan,harga from layanan ORDER BY id ASC;"
+	rows, err := db.Query(query8)
+	if err != nil {
+		fmt.Println("LIST MASIH BELUM TERISI!!")
+	}
+	defer rows.Close()
+	fmt.Print("\nTable Layanan:\n")
+	fmt.Println(strings.Repeat("-", 40))
+	fmt.Printf("%-4s %-18s %-7s %s\n", "ID", "|Jenis Layanan", "|Satuan", "|Harga")
+	fmt.Println(strings.Repeat("-", 40))
+
+	for rows.Next() {
+		rows.Scan(&lyn_id, &jenis_layanan, &satuan, &harga)
+		fmt.Printf("%-5s %-18s %-7s %d\n", lyn_id, jenis_layanan, satuan, harga)
+	}
+	fmt.Println(strings.Repeat("-", 40))
+
+}
 
 // update customer bagian paket pelayanan
 func enrollupdT(customer data.UpdateandDelete) {
@@ -556,6 +613,7 @@ func deletecs() {
 	deletecs := data.UpdateandDelete{Cs_id: cs_id}
 	enrollDEletecs(deletecs)
 }
+
 func enrollDEletecs(delete data.UpdateandDelete) {
 	db := connectDB()
 	defer db.Close()
@@ -575,6 +633,7 @@ func enrollDEletecs(delete data.UpdateandDelete) {
 		fmt.Println(strings.Repeat("-", 23))
 	}
 }
+
 func deleteCustomer(id string, tx *sql.Tx) {
 	// Hapus data dari tabel transaksi_detail
 	deleteTrksDtl := "DELETE FROM transaksi_dtl WHERE tr_id IN (SELECT id FROM transaksi WHERE cs_id = $1);"
@@ -602,6 +661,44 @@ func deleteCustomer(id string, tx *sql.Tx) {
 		tx.Rollback()
 		return
 	}
-
 	validate(err, "Delete Customer!", tx)
+}
+
+// update layanan
+func updatelyn() {
+	viewLayanan()
+	fmt.Print("\nMasukkan ID layanan yang ingin di Update harganya : ")
+	fmt.Scanln(&lyn_id)
+	fmt.Print("\nTentukan Harga terbaru : ")
+	fmt.Scanln(&harga)
+	updatelyn := data.UpdateandDelete{Lyn_id: lyn_id, Harga: harga}
+	enrollupdatelayanan(updatelyn)
+}
+
+func enrollupdatelayanan(update data.UpdateandDelete) {
+	db := connectDB()
+	defer db.Close()
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(err)
+	}
+	updateLayanan(update.Harga, update.Lyn_id, tx)
+	err = tx.Commit()
+	if err != nil {
+		panic(err)
+	} else {
+		fmt.Print(strings.Repeat("-", 23))
+		fmt.Print("\n|Transaction Commited!|\n")
+		fmt.Println(strings.Repeat("-", 23))
+	}
+
+}
+func updateLayanan(harga int64, id_lyn string, tx *sql.Tx) {
+	query9 := "UPDATE layanan SET harga = $1 WHERE id = $2;"
+	_, err := tx.Exec(query9, harga, id_lyn)
+	if err != nil {
+		fmt.Println("ID Layanan Belum terdaftar atau tidak ada!")
+		tx.Rollback()
+	}
 }
