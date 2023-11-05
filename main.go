@@ -135,6 +135,8 @@ func menu() {
 		}
 	case 3:
 		Updatecs()
+	case 4:
+		deletecs()
 	default:
 
 	}
@@ -262,7 +264,7 @@ func inputanTransaksi() {
 	enrollT(transaksiInsert)
 }
 
-// // select
+// // select total harga
 func selectData(id_trks int64, tx *sql.Tx) int64 {
 	selectD := "SELECT SUM(transaksi.quantity * layanan.harga) from transaksi join layanan on transaksi.lyn_id = layanan.id WHERE transaksi.id = $1;"
 	total_harga = 0
@@ -294,6 +296,7 @@ func nota() {
 	viewNotaHead(cs_id)
 	viewNotaBody(cs_id)
 }
+
 func viewNotaHead(id_cs string) {
 	db := connectDB()
 	defer db.Close()
@@ -322,7 +325,7 @@ func viewNotaHead(id_cs string) {
 	} else if tambahan == 0 {
 		paket = "Paket Gerimis"
 	}
-	//kepala
+
 	fmt.Printf("%-15s %-25s %s %s\n", "No Transaksi   : ", cs_id, "Nama customer : ", cs_nm)
 	fmt.Printf("%-15s %-25s %s %s\n", "Tanggal Masuk  : ", date_in.Format("2006-01-02"), "No telepon    : ", no_tlp)
 	fmt.Printf("%-15s %-25s %s %s\n", "Tanggal Selesai: ", date_out.Format("2006-01-02"), "Paket Laundry : ", paket)
@@ -356,6 +359,7 @@ func viewNotaBody(id_cs string) {
 
 }
 
+// view table customer
 func viewCustomer() {
 	db := connectDB()
 	defer db.Close()
@@ -375,9 +379,11 @@ func viewCustomer() {
 		rows.Scan(&cs_id, &cs_nm, &no_tlp, &date_in, &date_out, &tambahan, &ttl_byr)
 		fmt.Printf("%-6s %-14s %-14s %-14s %-16s %-9d %d\n", cs_id, cs_nm, no_tlp, date_in.Format("2006-01-02"), date_out.Format("2006-01-02"), tambahan, ttl_byr)
 	}
+	fmt.Println(strings.Repeat("-", 90))
 
 }
 
+// view table transaksi
 func viewTransaksi() {
 	db := connectDB()
 	defer db.Close()
@@ -400,6 +406,7 @@ func viewTransaksi() {
 
 }
 
+// view table transaksi detail
 func viewTransaksidtl() {
 	db := connectDB()
 	defer db.Close()
@@ -422,7 +429,7 @@ func viewTransaksidtl() {
 
 }
 
-// view
+// view  table layanan
 func viewLayanan() {
 	db := connectDB()
 	defer db.Close()
@@ -445,7 +452,7 @@ func viewLayanan() {
 
 }
 
-// update customer
+// update customer bagian paket pelayanan
 func enrollupdT(customer data.UpdateandDelete) {
 	db := connectDB()
 	defer db.Close()
@@ -466,6 +473,7 @@ func enrollupdT(customer data.UpdateandDelete) {
 		fmt.Println(strings.Repeat("-", 23))
 	}
 }
+
 func UpdateCustomer(update data.UpdateandDelete, tx *sql.Tx) {
 	sqlStatement := "UPDATE customer SET date_in = $1, date_out = $2, tambahan = $3 WHERE id = $4;"
 	_, err := tx.Exec(sqlStatement, date_in, date_out, tambahan, cs_id)
@@ -474,7 +482,9 @@ func UpdateCustomer(update data.UpdateandDelete, tx *sql.Tx) {
 	}
 	validate(err, "Update Changes in customer!", tx)
 }
+
 func Updatecs() {
+	viewCustomer()
 	fmt.Print("\nMasukkan Id customer      : ")
 	fmt.Scanln(&cs_id)
 	var pil int
@@ -497,5 +507,62 @@ func Updatecs() {
 	}
 	update := data.UpdateandDelete{Cs_id: cs_id, Date_in: date_in, Date_out: date_out, Tambahan: tambahan}
 	enrollupdT(update)
+}
 
+// delete customer
+func deletecs() {
+	viewCustomer()
+	fmt.Print("\nMasukkan ID cs yang ingin dihapus : ")
+	fmt.Scanln(&cs_id)
+	deletecs := data.UpdateandDelete{Cs_id: cs_id}
+	enrollDEletecs(deletecs)
+}
+func enrollDEletecs(delete data.UpdateandDelete) {
+	db := connectDB()
+	defer db.Close()
+
+	tx, err := db.Begin()
+	if err != nil {
+		panic(err)
+	}
+	deleteCustomer(delete.Cs_id, tx)
+	err = tx.Commit()
+	if err != nil {
+		panic(err)
+	} else {
+
+		fmt.Print(strings.Repeat("-", 23))
+		fmt.Print("\n|Transaction Commited!|\n")
+		fmt.Println(strings.Repeat("-", 23))
+	}
+}
+func deleteCustomer(id string, tx *sql.Tx) {
+	// Hapus data dari tabel transaksi_detail
+	deleteTrksDtl := "DELETE FROM transaksi_dtl WHERE tr_id IN (SELECT id FROM transaksi WHERE cs_id = $1);"
+	_, err := tx.Exec(deleteTrksDtl, id)
+	if err != nil {
+		fmt.Println("Error deleting transaksi detail:", err)
+		tx.Rollback()
+		return
+	}
+
+	// Hapus data dari tabel transaksi
+	deleteTrks := "DELETE FROM transaksi WHERE cs_id = $1;"
+	_, err = tx.Exec(deleteTrks, id)
+	if err != nil {
+		fmt.Println("Error deleting transaksi:", err)
+		tx.Rollback()
+		return
+	}
+
+	// Hapus data dari tabel customer
+	deleteCs := "DELETE FROM customer WHERE id = $1;"
+	_, err = tx.Exec(deleteCs, id)
+	if err != nil {
+		fmt.Println("Error deleting customer:", err)
+		tx.Rollback()
+		return
+	}
+
+	validate(err, "Delete Customer!", tx)
 }
