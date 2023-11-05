@@ -79,22 +79,18 @@ a:
 		fmt.Printf("\nLogin berhasil !, Selamat datang %s\n\n", ur_nm)
 	} else {
 		fmt.Println("\nLogin Gagal!, Id atau sandi salah!!")
-		fmt.Println("\nTekan 1 untuk Login ulang dan 0 untuk Exit")
-		fmt.Print(strings.Repeat("=", 24))
-		fmt.Print(" : ")
-		var lanjut int
+		fmt.Println("\nLanjut Login [Y/T]: ")
+		var lanjut string
 		fmt.Scanln(&lanjut)
-		switch lanjut {
-		case 1:
+		if lanjut == "Y" || lanjut == "y" {
 			goto a
-		case 0:
-		default:
 		}
 	}
 }
 
 // menu
 func menu() {
+b:
 	fmt.Println(strings.Repeat("-", 56))
 	fmt.Println("\t |SILAHKAN PILIH OPSI YANG DIINGINKAN|")
 	fmt.Println(strings.Repeat("-", 56))
@@ -103,6 +99,7 @@ func menu() {
 	fmt.Scanln(&menu)
 	switch menu {
 	case 1:
+	a:
 		inputanCustomer()
 		fmt.Print("\nMasukkan jumlah pelayanan : ")
 		var pel int
@@ -117,23 +114,65 @@ func menu() {
 		}
 		viewNotaHead(cs_id)
 		viewNotaBody(cs_id)
+		var pil string
+		fmt.Print("\n\nApakah ada transaksi lain [Y/T]: ")
+		fmt.Scanln(&pil)
+		if pil == "y" || pil == "Y" {
+			goto a
+		} else {
+			goto b
+		}
 	case 2:
+	c:
 		fmt.Print("\nMenampilkan data :\n1. Nota\n2. customer\n3. transaksi\n4. layanan\n5. exit\n==============: ")
 		var view int
 		fmt.Scanln(&view)
 		switch view {
 		case 1:
 			nota()
+			fmt.Print("\nApakah ingin melihat data yang lain [Y/T]: ")
+			var pil string
+			fmt.Scanln(&pil)
+			if pil == "y" || pil == "Y" {
+				goto c
+			} else {
+				goto b
+			}
 		case 2:
 			viewCustomer()
+			fmt.Print("\nApakah ingin melihat data yang lain [Y/T]: ")
+			var pil string
+			fmt.Scanln(&pil)
+			if pil == "y" || pil == "Y" {
+				goto c
+			} else {
+				goto b
+			}
 		case 3:
 			viewTransaksi()
 			viewTransaksidtl()
+			fmt.Print("\nApakah ingin melihat data yang lain [Y/T]: ")
+			var pil string
+			fmt.Scanln(&pil)
+			if pil == "y" || pil == "Y" {
+				goto c
+			} else {
+				goto b
+			}
 		case 4:
 			viewLayanan()
+			fmt.Print("\nApakah ingin melihat data yang lain [Y/T]: ")
+			var pil string
+			fmt.Scanln(&pil)
+			if pil == "y" || pil == "Y" {
+				goto c
+			} else {
+				goto b
+			}
 		default:
 		}
 	case 3:
+		fmt.Print("Update Data : \n1. Customer\n2. Layanan\n3. ")
 		Updatecs()
 	case 4:
 		deletecs()
