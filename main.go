@@ -140,7 +140,7 @@ b:
 		fmt.Println()
 		fmt.Println(strings.Repeat("-", 21))
 		fmt.Println("|MENU TAMPILKAN DATA|")
-		fmt.Println(strings.Repeat("-", 16))
+		fmt.Println(strings.Repeat("-", 21))
 
 		fmt.Print("\nMenampilkan data :\n1. Nota\n2. customer\n3. transaksi\n4. layanan\n5. back to main menu\n6. exit\n==============: ")
 		var view int
@@ -230,11 +230,20 @@ b:
 		}
 
 	case 4:
+	g:
 		fmt.Println()
 		fmt.Println(strings.Repeat("-", 16))
 		fmt.Println("|MENU DELETE CSUTOMER|")
 		fmt.Println(strings.Repeat("-", 16))
 		deletecs()
+		fmt.Print("\nApakah ingin menghapus data yang lain [Y/T]: ")
+		var pil string
+		fmt.Scanln(&pil)
+		if pil == "y" || pil == "Y" {
+			goto g
+		} else {
+			goto b
+		}
 	default:
 
 	}
