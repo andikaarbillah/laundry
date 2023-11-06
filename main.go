@@ -192,6 +192,7 @@ b:
 		default:
 		}
 	case 3:
+	d:
 		fmt.Println()
 		fmt.Println(strings.Repeat("-", 18))
 		fmt.Println("|MENU UPDATE DATA|")
@@ -202,7 +203,6 @@ b:
 		fmt.Scanln(&pil)
 		switch pil {
 		case 1:
-		d:
 			Updatecs()
 			fmt.Print("\nApakah ingin mengupdate data yang lain [Y/T]: ")
 			var pil string
@@ -213,13 +213,12 @@ b:
 				goto b
 			}
 		case 2:
-		e:
 			updatelyn()
 			fmt.Print("\nApakah ingin mengupdate data yang lain [Y/T]: ")
 			var pil string
 			fmt.Scanln(&pil)
 			if pil == "y" || pil == "Y" {
-				goto e
+				goto d
 			} else {
 				goto b
 			}
